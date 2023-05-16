@@ -17,6 +17,8 @@ namespace TicketingSystem.DAL
         private IRepository<SeatRow> _SeatRowsRepository;
         private IRepository<Section> _SectionsRepository;
         private IRepository<Venue> _VenuesRepository;
+        private IRepository<User> _UsersRepository;
+        private IRepository<Ticket> _TicketsRepository;
         private bool _disposed;
 
         public UnitOfWork(TicketingSystemContext dbContext)
@@ -33,6 +35,8 @@ namespace TicketingSystem.DAL
         public IRepository<SeatRow> SeatRowsRepository => _SeatRowsRepository ??= new Repository<SeatRow>(_dbContext.SeatRows);
         public IRepository<Section> SectionsRepository => _SectionsRepository ??= new Repository<Section>(_dbContext.Sections);
         public IRepository<Venue> VenuesRepository => _VenuesRepository ??= new Repository<Venue>(_dbContext.Venues);
+        public IRepository<User> UsersRepository => _UsersRepository ??= new Repository<User>(_dbContext.Users);
+        public IRepository<Ticket> TicketsRepository => _TicketsRepository ??= new Repository<Ticket>(_dbContext.Tickets);
 
 
         public async Task SaveAsync()

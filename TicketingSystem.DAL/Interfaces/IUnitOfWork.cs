@@ -13,6 +13,8 @@ namespace TicketingSystem.DAL.Interfaces
         IRepository<SeatRow> SeatRowsRepository{ get; }
         IRepository<Section> SectionsRepository{ get; }
         IRepository<Venue> VenuesRepository{ get; }
+        IRepository<User> UsersRepository { get; }
+        IRepository<Ticket> TicketsRepository { get; }
         Task SaveAsync();
     }
 }
