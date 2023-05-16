@@ -6,6 +6,8 @@ namespace TicketingSystem.DAL.Entities
         public int Id { get; set; }
         public string Status { get; set; }
         public int CartId { get; set; }
+        public int UserId { get; set; }
         public Cart Cart { get; set; }
+        public User User { get; set; }
     }
 }

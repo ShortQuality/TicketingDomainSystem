@@ -6,7 +6,9 @@ namespace TicketingSystem.DAL.Entities
     {
         public int Id { get; set; }
         public int Number { get; set; }
-        public int Price { get; set; }
+        public bool isBooked { get; set; }
+        public int SeatRowId { get; set; }
         public SeatRow SeatRow { get; set; }
+        public ICollection<Ticket> Tickets { get; set; }
     }
 }

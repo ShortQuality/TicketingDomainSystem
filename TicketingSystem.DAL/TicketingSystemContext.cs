@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Net.Sockets;
 using TicketingSystem.DAL.Entities;
 
 namespace TicketingSystem.DAL
@@ -11,83 +12,95 @@ namespace TicketingSystem.DAL
         public DbSet<Payment> Payments{ get; set; }
         public DbSet<Price> Prices{ get; set; }
         public DbSet<Seat> Seats { get; set; }
-        public DbSet<SeatRow> SeatRows{ get; set; }
-        public DbSet<Section> Sections{ get; set; }
-        public DbSet<Venue> Venues{ get; set; }
+        public DbSet<SeatRow> SeatRows { get; set; }
+        public DbSet<Section> Sections { get; set; }
+        public DbSet<Venue> Venues { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Ticket> Tickets { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Cart>(entity =>
+            modelBuilder.Entity<User>(entity =>
             {
-                entity.HasKey(e => e.Id);
-                entity.Property(p => p.CartDetails);
-            });
-
-            modelBuilder.Entity<CartDetail>(entity =>
-            {
-                entity.HasKey(e => e.CartId);
-                entity.Property(p => p.EventId);
-                entity.HasMany(e => e.Seats);
-                entity.HasOne(d => d.Cart)
-                  .WithMany(p => p.CartDetails);
+                entity.HasKey(e => e.UserId);
+                entity.Property(e => e.FirstName).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.LastName).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Password).IsRequired().HasMaxLength(100);
+                entity.HasOne(e => e.Cart).WithOne(e => e.User).HasForeignKey<Cart>(e => e.Id);
             });
 
             modelBuilder.Entity<Event>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.HasOne(e => e.Venue);
-                entity.Property(p => p.Name);
+                entity.Property(p => p.Name).IsRequired().HasMaxLength(100);
+                entity.Property(p => p.Description).IsRequired().HasMaxLength(500);
+                entity.Property(p => p.Date).IsRequired();
+                entity.HasOne(e => e.Venue).WithMany(e => e.Events).HasForeignKey(e => e.VenueId);
             });
 
-            modelBuilder.Entity<Payment>(entity =>
+            modelBuilder.Entity<Venue>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(p => p.Status);
-                entity.Property(p => p.CartId);
-                entity.HasOne(d => d.Cart);
-
+                entity.Property(p => p.Name).IsRequired().HasMaxLength(100);
+                entity.Property(p => p.Address).IsRequired().HasMaxLength(200);
             });
 
-            modelBuilder.Entity<Price>(entity =>
+            modelBuilder.Entity<Section>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(p => p.Amount);
-                entity.HasMany(d => d.Seats);
-            });
-
-            modelBuilder.Entity<Seat>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(p => p.Number);
-                entity.Property(p => p.Price);
-                entity.HasOne(d => d.SeatRow);
+                entity.Property(p => p.Letter).IsRequired();
+                entity.Property(p => p.Number).IsRequired();
+                entity.HasOne(e => e.Venue).WithMany(v => v.Sections).HasForeignKey(e => e.VenueId);
             });
 
             modelBuilder.Entity<SeatRow>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(p => p.Number);
-                entity.HasMany(d => d.Seats);
-                entity.HasOne(d => d.Section).WithMany(d => d.SeatRows);
+                entity.HasOne(e => e.Section).WithMany(e => e.SeatRows).HasForeignKey(e => e.SectionId);
             });
 
-            modelBuilder.Entity<Section>(entity =>
+            modelBuilder.Entity<Seat>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(p => p.Letter);
+                entity.Property(p => p.isBooked);
                 entity.Property(p => p.Number);
-                entity.HasMany(d => d.SeatRows);
-                entity.HasOne(d => d.Venue).WithMany(d => d.Sections);
+                entity.HasOne(p => p.SeatRow).WithMany(e => e.Seats).HasForeignKey(e => e.SeatRowId);
             });
 
-            modelBuilder.Entity<Venue>(entity =>
+            modelBuilder.Entity<Ticket>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(p => p.Name);
-                entity.HasMany(d => d.Sections);
-                entity.HasMany(d => d.Events).WithOne(d => d.Venue);
+                entity.Property(p => p.PurchaseDate).IsRequired();
+                entity.HasOne(e => e.Event).WithMany(e => e.Tickets).HasForeignKey(e => e.EventId);
+                entity.HasOne(e => e.User).WithMany(e => e.Tickets).HasForeignKey(e => e.UserId);
+                entity.HasOne(e => e.Seat).WithMany(e => e.Tickets).HasForeignKey(e => e.SeatId);
+                entity.HasOne(e => e.Price).WithMany(e => e.Tickets).HasForeignKey(e => e.PriceId);
+            });
+
+            modelBuilder.Entity<Cart>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasMany(e => e.CartDetails).WithOne(cd => cd.Cart).HasForeignKey(cd => cd.CartId);
+            });
+
+            modelBuilder.Entity<CartDetail>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.EventId);
+                entity.Property(e => e.SeatId);
+                entity.Property(e => e.PriceId);
+                entity.HasOne(e => e.Cart).WithMany(c => c.CartDetails).HasForeignKey(e => e.CartId);
+            });
+
+            modelBuilder.Entity<Payment>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(p => p.Status);
+                entity.HasOne(e => e.User).WithOne(e => e.Payment).HasForeignKey<Payment>(e => e.UserId);
             });
         }
     }
