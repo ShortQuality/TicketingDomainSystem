@@ -1,7 +1,11 @@
+using TicketingSystem.BL.Services;
+using TicketingSystem.BL.Services.Interfaces;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllers();
+builder.Services.AddScoped<ICartService, CartService>();
 
 var app = builder.Build();
 

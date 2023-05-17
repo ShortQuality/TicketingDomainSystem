@@ -5,7 +5,8 @@ namespace TicketingSystem.DAL.Entities
     {
         public int Id { get; set; }
         public int UserId { get; set; }
+        public float TotalAmount { get; set; }
         public User User { get; set; }
-        public ICollection<CartDetail> CartDetails { get; set; }
+        public ICollection<Ticket> Tickets { get; set; }
     }
 }

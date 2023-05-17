@@ -10,4 +10,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.5" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TicketingSystem.BL\TicketingSystem.BL.csproj" />
+    <ProjectReference Include="..\TicketingSystem.DAL\TicketingSystem.DAL.csproj" />
+  </ItemGroup>
+
 </Project>

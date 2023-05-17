@@ -19,10 +19,10 @@ namespace TicketingSystem.DAL.Repositories
             _entities.AddAsync(entity);
         }
 
-        public virtual IEnumerable<TEntity> Get(
-            Expression<Func<TEntity, bool>> filter = null,
-            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
-            string includeProperties = "")
+        public async Task<IEnumerable<TEntity>> GetAsync(
+        Expression<Func<TEntity, bool>> filter = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+        params Expression<Func<TEntity, object>>[] includeProperties)
         {
             IQueryable<TEntity> query = _entities;
 
@@ -31,20 +31,17 @@ namespace TicketingSystem.DAL.Repositories
                 query = query.Where(filter);
             }
 
-            foreach (var includeProperty in includeProperties.Split
-                (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var includeProperty in includeProperties)
             {
                 query = query.Include(includeProperty);
             }
 
             if (orderBy != null)
             {
-                return orderBy(query).ToList();
+                query = orderBy(query);
             }
-            else
-            {
-                return query.ToList();
-            }
+
+            return await query.ToListAsync();
         }
 
         public virtual ValueTask<TEntity> FirstOrDefaultAsync(int id)

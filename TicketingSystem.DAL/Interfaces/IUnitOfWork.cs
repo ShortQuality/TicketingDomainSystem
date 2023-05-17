@@ -5,7 +5,6 @@ namespace TicketingSystem.DAL.Interfaces
     public interface IUnitOfWork
     {
         IRepository<Cart> CartsRepository { get; }
-        IRepository<CartDetail> CartDetailsRepository { get; }
         IRepository<Event> EventsRepository { get; }
         IRepository<Payment> PaymentsRepository{ get; }
         IRepository<Price> PricesRepository{ get; }

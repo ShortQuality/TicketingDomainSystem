@@ -7,7 +7,6 @@ namespace TicketingSystem.DAL
     public class TicketingSystemContext : DbContext
     {
         public DbSet<Cart> Carts { get; set; }
-        public DbSet<CartDetail> CartDetails{ get; set; }
         public DbSet<Event> Events{ get; set; }
         public DbSet<Payment> Payments{ get; set; }
         public DbSet<Price> Prices{ get; set; }
@@ -38,7 +37,7 @@ namespace TicketingSystem.DAL
                 entity.Property(p => p.Name).IsRequired().HasMaxLength(100);
                 entity.Property(p => p.Description).IsRequired().HasMaxLength(500);
                 entity.Property(p => p.Date).IsRequired();
-                entity.HasOne(e => e.Venue).WithMany(e => e.Events).HasForeignKey(e => e.VenueId);
+                entity.HasOne(e => e.Venue).WithOne(e => e.Event).HasForeignKey<Venue>(e => e.Id);
             });
 
             modelBuilder.Entity<Venue>(entity =>
@@ -66,7 +65,7 @@ namespace TicketingSystem.DAL
             modelBuilder.Entity<Seat>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(p => p.isBooked);
+                entity.Property(p => p.SeatState);
                 entity.Property(p => p.Number);
                 entity.HasOne(p => p.SeatRow).WithMany(e => e.Seats).HasForeignKey(e => e.SeatRowId);
             });
@@ -79,21 +78,13 @@ namespace TicketingSystem.DAL
                 entity.HasOne(e => e.User).WithMany(e => e.Tickets).HasForeignKey(e => e.UserId);
                 entity.HasOne(e => e.Seat).WithMany(e => e.Tickets).HasForeignKey(e => e.SeatId);
                 entity.HasOne(e => e.Price).WithMany(e => e.Tickets).HasForeignKey(e => e.PriceId);
+                entity.HasOne(e => e.Cart).WithMany(e => e.Tickets).HasForeignKey(e => e.Cart);
             });
 
             modelBuilder.Entity<Cart>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.HasMany(e => e.CartDetails).WithOne(cd => cd.Cart).HasForeignKey(cd => cd.CartId);
-            });
-
-            modelBuilder.Entity<CartDetail>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.EventId);
-                entity.Property(e => e.SeatId);
-                entity.Property(e => e.PriceId);
-                entity.HasOne(e => e.Cart).WithMany(c => c.CartDetails).HasForeignKey(e => e.CartId);
+                entity.Property(p => p.TotalAmount);
             });
 
             modelBuilder.Entity<Payment>(entity =>

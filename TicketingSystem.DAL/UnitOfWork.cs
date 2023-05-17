@@ -9,7 +9,6 @@ namespace TicketingSystem.DAL
     {
         private TicketingSystemContext _dbContext;
         private IRepository<Cart> _CartsRepository;
-        private IRepository<CartDetail> _CartDetailsRepository;
         private IRepository<Event> _EventsRepository;
         private IRepository<Payment> _PaymentsRepository;
         private IRepository<Price> _PricesRepository;
@@ -27,7 +26,6 @@ namespace TicketingSystem.DAL
         }
 
         public IRepository<Cart> CartsRepository => _CartsRepository ??= new Repository<Cart>(_dbContext.Carts);
-        public IRepository<CartDetail> CartDetailsRepository => _CartDetailsRepository ??= new Repository<CartDetail>(_dbContext.CartDetails);
         public IRepository<Event> EventsRepository => _EventsRepository ??= new Repository<Event>(_dbContext.Events);
         public IRepository<Payment> PaymentsRepository => _PaymentsRepository ??= new Repository<Payment>(_dbContext.Payments);
         public IRepository<Price> PricesRepository => _PricesRepository ??= new Repository<Price>(_dbContext.Prices);
