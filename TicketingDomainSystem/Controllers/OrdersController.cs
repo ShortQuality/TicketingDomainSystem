@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using IdentityServer3.Core.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using TicketingSystem.BL.Services;
 using TicketingSystem.BL.Services.Interfaces;
 using TicketingSystem.DAL.Entities;
@@ -11,26 +13,42 @@ namespace TicketingDomainSystem.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICartService _cartService;
+        private readonly IMemoryCache _cache;
 
-        public OrdersController(IUnitOfWork unitOfWork, ICartService cartService)
+        public OrdersController(IUnitOfWork unitOfWork, ICartService cartService, IMemoryCache cache)
         {
             _unitOfWork = unitOfWork;
             _cartService = cartService;
+            _cache = cache;
         }
 
         [HttpGet("carts/{cartId}")]
+        [ResponseCache(Duration = 60)]
         public async Task<ActionResult<IEnumerable<Cart>>> GetCartDetails(int cartId)
         {
+            var cacheKey = $"cart_{cartId}";
+            var cachedCartItems = _cache.Get<IEnumerable<Cart>>(cacheKey);
+
+            if (cachedCartItems != null)
+            {
+                return Ok(cachedCartItems);
+            }
+
             var cartItems = await _unitOfWork.CartsRepository.GetAsync(
                 filter: cart => cart.Id == cartId,
                 includeProperties: cart => cart.Tickets);
+
+            _cache.Set(cacheKey, cartItems, TimeSpan.FromSeconds(60)); // Cache the response for 60 seconds
+
+            // Invalidate the cache for the Event resource
+            _cache.Remove("GetEvents");
+
             return Ok(cartItems);
         }
 
         [HttpPost("carts/{cartId}")]
         public async Task<ActionResult<Cart>> AddCartItem(int cartId, Cart cart)
         {
-
             var payment = new Payment
             {
                 CartId = cartId,
@@ -41,13 +59,11 @@ namespace TicketingDomainSystem.Controllers
             _unitOfWork.CartsRepository.AddAsync(cart);
             await _unitOfWork.SaveAsync();
 
-            //var cartState = new
-            //{
-            //    TotalAmount = cart.TotalAmount
-            //};
+            // Invalidate the cache for the Event resource
+            _cache.Remove("GetEvents");
 
-            //return Ok(cartState);
-            return Ok();
+            return CreatedAtAction(nameof(GetCartDetails), new { cartId = cart.Id }, cart);
+
         }
 
         [HttpDelete("carts/{cartId}/events/{eventId}/seats/{seatId}")]
