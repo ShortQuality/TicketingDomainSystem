@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using IdentityServer3.Core.ViewModels;
+using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-using TicketingDomainSystem.Models;
 
 namespace TicketingDomainSystem.Controllers
 {

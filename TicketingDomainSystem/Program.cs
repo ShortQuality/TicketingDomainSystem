@@ -1,11 +1,17 @@
 using TicketingSystem.BL.Services;
 using TicketingSystem.BL.Services.Interfaces;
+using TicketingSystem.DAL;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddScoped<ICartService, CartService>();
+
+// Add MSSQL database connection
+builder.Services.AddDbContext<TicketingSystemContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("TicketingDomainSystemDbConnection")));
 
 var app = builder.Build();
 

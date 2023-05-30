@@ -5,11 +5,13 @@ VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicketingDomainSystem", "TicketingDomainSystem\TicketingDomainSystem.csproj", "{DE93D8C6-FFB5-4B46-AACC-57475B290F3D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicketingSystem.DAL", "TicketingSystem.DAL\TicketingSystem.DAL.csproj", "{ACE0183B-4A6C-4570-A89B-989A251D0D98}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicketingSystem.DAL", "TicketingSystem.DAL\TicketingSystem.DAL.csproj", "{ACE0183B-4A6C-4570-A89B-989A251D0D98}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicketingSystem.BL", "TicketingSystem.BL\TicketingSystem.BL.csproj", "{80084768-E4F1-4D85-9C18-7E4722BFD6B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicketingSystem.BL", "TicketingSystem.BL\TicketingSystem.BL.csproj", "{80084768-E4F1-4D85-9C18-7E4722BFD6B6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicketingSystem.UnitTests", "TicketingSystem.UnitTests\TicketingSystem.UnitTests.csproj", "{284CBFBC-C610-4916-B46A-566D8AAD3428}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicketingSystem.UnitTests", "TicketingSystem.UnitTests\TicketingSystem.UnitTests.csproj", "{284CBFBC-C610-4916-B46A-566D8AAD3428}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TicketingSystem.IntegrationTests", "TicketingSystem.IntegrationTests\TicketingSystem.IntegrationTests.csproj", "{04CAABAD-B695-4DBC-887B-9375321E1F6E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{284CBFBC-C610-4916-B46A-566D8AAD3428}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{284CBFBC-C610-4916-B46A-566D8AAD3428}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{284CBFBC-C610-4916-B46A-566D8AAD3428}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04CAABAD-B695-4DBC-887B-9375321E1F6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04CAABAD-B695-4DBC-887B-9375321E1F6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04CAABAD-B695-4DBC-887B-9375321E1F6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04CAABAD-B695-4DBC-887B-9375321E1F6E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
