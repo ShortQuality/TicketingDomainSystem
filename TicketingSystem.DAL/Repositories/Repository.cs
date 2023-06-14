@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using TicketingSystem.DAL.Entities;
 using TicketingSystem.DAL.Interfaces;
 
 namespace TicketingSystem.DAL.Repositories
@@ -8,9 +9,11 @@ namespace TicketingSystem.DAL.Repositories
     {
 
         private DbSet<TEntity> _entities { get; }
+        private TicketingSystemContext _dbContext;
 
-        public Repository(DbSet<TEntity> entities)
+        public Repository(TicketingSystemContext dbContext, DbSet<TEntity> entities)
         {
+            _dbContext = dbContext;
             _entities = entities;
         }
 
@@ -62,5 +65,38 @@ namespace TicketingSystem.DAL.Repositories
         {
             _entities.Remove(entity);
         }
+
+        public async Task<bool> LockEntityAsync(int id)
+        {
+            var entity = await FirstOrDefaultAsync(id);
+
+            if (entity == null)
+            {
+                return false;
+            }
+
+            _dbContext.Entry(entity).State = EntityState.Modified;
+
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return false;
+            }
+        }
+
+        public async Task UnlockEntityAsync(int id)
+        {
+            var entity= await FirstOrDefaultAsync(id);
+
+            if (entity!= null)
+            {
+                _dbContext.Entry(entity).State = EntityState.Detached;
+            }
+        }
+
     }
 }

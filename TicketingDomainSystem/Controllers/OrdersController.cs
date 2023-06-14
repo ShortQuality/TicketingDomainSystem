@@ -47,7 +47,7 @@ namespace TicketingDomainSystem.Controllers
         }
 
         [HttpPost("carts/{cartId}")]
-        public async Task<ActionResult<Cart>> AddCartItem(int cartId, Cart cart)
+        public async Task<ActionResult<Cart>> AddCartItem_PessimisticConcurrency(int cartId, Cart cart)
         {
             var payment = new Payment
             {
@@ -56,7 +56,52 @@ namespace TicketingDomainSystem.Controllers
             };
 
             _unitOfWork.PaymentsRepository.AddAsync(payment);
+
+            cart.Version++;
+            var lockAcquired = await _unitOfWork.CartsRepository.LockEntityAsync(cartId);
+
+            if (!lockAcquired)
+            {
+                throw new ArgumentException($"Cart with ID {cartId} is currently being modified by another user.");
+            }
+
             _unitOfWork.CartsRepository.AddAsync(cart);
+
+            await _unitOfWork.SaveAsync();
+
+            await _unitOfWork.CartsRepository.UnlockEntityAsync(cartId);
+            // Invalidate the cache for the Event resource
+            _cache.Remove("GetEvents");
+
+            return CreatedAtAction(nameof(GetCartDetails), new { cartId = cart.Id }, cart);
+
+        }
+
+        [HttpPost("carts/{cartId}")]
+        public async Task<ActionResult<Cart>> AddCartItem_OptimisticConcurrency(int cartId, Cart cartDto)
+        {
+            var payment = new Payment
+            {
+                CartId = cartId,
+                Cart = cartDto
+            };
+
+            var cart = await _unitOfWork.CartsRepository.GetAsync(cart => cart.Id == cartId);
+
+            if (cart == null)
+            {
+                return NotFound();
+            }
+
+            // Check if the cart has been modified since it was retrieved
+            if (cart.FirstOrDefault().Version != cartDto.Version)
+            {
+                return Conflict();
+            }
+
+            _unitOfWork.PaymentsRepository.AddAsync(payment);
+            _unitOfWork.CartsRepository.AddAsync(cartDto);
+
             await _unitOfWork.SaveAsync();
 
             // Invalidate the cache for the Event resource

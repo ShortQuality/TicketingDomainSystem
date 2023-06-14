@@ -8,5 +8,6 @@ namespace TicketingSystem.DAL.Entities
         public float TotalAmount { get; set; }
         public User User { get; set; }
         public ICollection<Ticket> Tickets { get; set; }
+        public int Version { get; set; }
     }
 }

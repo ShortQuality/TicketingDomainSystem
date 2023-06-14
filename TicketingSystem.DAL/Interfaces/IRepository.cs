@@ -18,5 +18,7 @@ namespace TicketingSystem.DAL.Interfaces
 
         void Update(TEntity entity);
         void Delete(TEntity entity);
+        Task<bool> LockEntityAsync(int id);
+        Task UnlockEntityAsync(int id);
     }
 }
