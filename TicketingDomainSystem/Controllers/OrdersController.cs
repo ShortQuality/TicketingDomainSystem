@@ -107,7 +107,7 @@ namespace TicketingDomainSystem.Controllers
             // Invalidate the cache for the Event resource
             _cache.Remove("GetEvents");
 
-            return CreatedAtAction(nameof(GetCartDetails), new { cartId = cart.Id }, cart);
+            return CreatedAtAction(nameof(GetCartDetails), new { cartId = cart.FirstOrDefault().Id }, cart);
 
         }
 

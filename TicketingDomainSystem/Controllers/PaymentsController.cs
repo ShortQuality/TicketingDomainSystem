@@ -1,5 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mailjet.Client;
+using Microsoft.AspNetCore.Connections;
+using Microsoft.AspNetCore.Mvc;
+using RabbitMQ.Client;
+using System.Text;
+using System.Threading.Channels;
 using System.Xml;
+using TicketingDomainSystem.Handlers;
 using TicketingSystem.BL;
 using TicketingSystem.DAL.Entities;
 using TicketingSystem.DAL.Interfaces;
@@ -11,10 +17,42 @@ namespace TicketingDomainSystem.Controllers
     public class PaymentsController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IConnection _connection;
+        private readonly IModel _channel;
 
         public PaymentsController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+
+            // Create a connection to RabbitMQ
+            var factory = new ConnectionFactory
+            {
+                HostName = "localhost",
+                UserName = "guest",
+                Password = "guest"
+            };
+            _connection = factory.CreateConnection();
+
+            // Create a channel to communicate with RabbitMQ
+            _channel = _connection.CreateModel();
+
+            // Create an instance of the NotificationHandler class
+            var mailjetClient = new MailjetClient("API_KEY", "API_SECRET");
+            var notificationHandler = new NotificationHandler(_channel, mailjetClient);
+
+            // Register the notification handler as a consumer on the channel
+            _channel.BasicConsume("notifications", false, notificationHandler);
+
+        }
+        public IActionResult SendEmailNotification(string email)
+        {
+            // Create a message to send to the notification handler
+            var message = Encoding.UTF8.GetBytes(email);
+
+            // Publish the message to the "email_notifications" queue
+            _channel.BasicPublish(exchange: "", routingKey: "email_notifications", basicProperties: null, body: message);
+
+            return Ok();
         }
 
         [HttpGet("payments/{paymentId}")]
@@ -41,6 +79,9 @@ namespace TicketingDomainSystem.Controllers
                 ticket.Seat.SeatState = (int)SeatState.Sold;
             }
             await _unitOfWork.SaveAsync();
+
+            string email = "Payment Complete";
+            SendEmailNotification(email);
             return Ok();
         }
 
