@@ -72,5 +72,45 @@ namespace TicketingDomainSystem.Controllers
 
             return Ok(seats);
         }
+
+        [HttpPost("{eventId}/sections/{sectionId}")]
+        public async Task<ActionResult<Cart>> AddVenueSectionToEvent_PessimisticConcurrency(int sectionId, Section sectionDto)
+        {
+            sectionDto.Version++;
+            var lockAcquired = await _unitOfWork.SectionsRepository.LockEntityAsync(sectionId);
+
+            if (!lockAcquired)
+            {
+                throw new ArgumentException($"Cart with ID {sectionId} is currently being modified by another user.");
+            }
+
+            _unitOfWork.SectionsRepository.AddAsync(sectionDto);
+            await _unitOfWork.SaveAsync();
+            await _unitOfWork.SectionsRepository.UnlockEntityAsync(sectionId);
+
+            return Ok();
+        }
+
+        [HttpPost("carts/{cartId}")]
+        public async Task<ActionResult<Cart>> AddVenueSectionToEvent_OptimisticConcurrency(int sectionId, Section sectionDto)
+        {
+            var section = await _unitOfWork.SectionsRepository.GetAsync(section => section.Id == sectionId);
+
+            if (section == null)
+            {
+                return NotFound();
+            }
+
+            // Check if the cart has been modified since it was retrieved
+            if (section.FirstOrDefault().Version != sectionDto.Version)
+            {
+                return Conflict();
+            }
+
+            _unitOfWork.SectionsRepository.AddAsync(sectionDto);
+
+            await _unitOfWork.SaveAsync();
+            return Ok();
+        }
     }
 }

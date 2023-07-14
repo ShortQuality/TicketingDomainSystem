@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Text;
 using Mailjet.Client;
 using Mailjet.Client.Resources;
@@ -24,7 +25,7 @@ namespace TicketingDomainSystem.Handlers
 
             // Create a retry policy using Polly
             _retryPolicy = Policy
-                .Handle<Exception>()
+                .Handle<HttpRequestException>(ex => ex.StatusCode == HttpStatusCode.NotFound)
                 .WaitAndRetry(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         }
 

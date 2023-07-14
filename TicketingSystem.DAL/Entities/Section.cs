@@ -9,6 +9,7 @@ namespace TicketingSystem.DAL.Entities
         public char Letter { get; set; }
         public int VenueId { get; set; }
         public Venue Venue { get; set; }
+        public int Version { get; set; }
         public ICollection<SeatRow> SeatRows { get; set; }
     }
 }
