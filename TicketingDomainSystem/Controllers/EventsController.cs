@@ -1,6 +1,8 @@
 ﻿using IdentityServer3.Core.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using TicketingSystem.DAL;
 using TicketingSystem.DAL.Entities;
 using TicketingSystem.DAL.Interfaces;
 
@@ -12,11 +14,13 @@ namespace TicketingDomainSystem.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMemoryCache _cache;
+        private readonly TicketingSystemContext _dbContext;
 
-        public EventsController(IUnitOfWork unitOfWork, IMemoryCache cache)
+        public EventsController(IUnitOfWork unitOfWork, IMemoryCache cache, TicketingSystemContext dbContext)
         {
             _unitOfWork = unitOfWork;
             _cache = cache;
+            _dbContext = dbContext;
         }
 
         //[HttpGet]
@@ -76,19 +80,19 @@ namespace TicketingDomainSystem.Controllers
         [HttpPost("{eventId}/sections/{sectionId}")]
         public async Task<ActionResult<Cart>> AddVenueSectionToEvent_PessimisticConcurrency(int sectionId, Section sectionDto)
         {
-            sectionDto.Version++;
-            var lockAcquired = await _unitOfWork.SectionsRepository.LockEntityAsync(sectionId);
-
-            if (!lockAcquired)
+            using var transaction = _dbContext.Database.BeginTransaction(System.Data.IsolationLevel.Serializable);
+            try
             {
-                throw new ArgumentException($"Cart with ID {sectionId} is currently being modified by another user.");
+                _unitOfWork.SectionsRepository.AddAsync(sectionDto);
+                await _unitOfWork.SaveAsync();
+                transaction.Commit();
+                return Ok();
             }
-
-            _unitOfWork.SectionsRepository.AddAsync(sectionDto);
-            await _unitOfWork.SaveAsync();
-            await _unitOfWork.SectionsRepository.UnlockEntityAsync(sectionId);
-
-            return Ok();
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                return StatusCode(400);
+            }
         }
 
         [HttpPost("carts/{cartId}")]
@@ -107,6 +111,7 @@ namespace TicketingDomainSystem.Controllers
                 return Conflict();
             }
 
+            sectionDto.Version++;
             _unitOfWork.SectionsRepository.AddAsync(sectionDto);
 
             await _unitOfWork.SaveAsync();

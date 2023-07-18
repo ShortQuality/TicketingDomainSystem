@@ -65,38 +65,5 @@ namespace TicketingSystem.DAL.Repositories
         {
             _entities.Remove(entity);
         }
-
-        public async Task<bool> LockEntityAsync(int id)
-        {
-            var entity = await FirstOrDefaultAsync(id);
-
-            if (entity == null)
-            {
-                return false;
-            }
-
-            _dbContext.Entry(entity).State = EntityState.Modified;
-
-            try
-            {
-                await _dbContext.SaveChangesAsync();
-                return true;
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return false;
-            }
-        }
-
-        public async Task UnlockEntityAsync(int id)
-        {
-            var entity= await FirstOrDefaultAsync(id);
-
-            if (entity!= null)
-            {
-                _dbContext.Entry(entity).State = EntityState.Detached;
-            }
-        }
-
     }
 }

@@ -1,8 +1,10 @@
 ﻿using IdentityServer3.Core.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using TicketingSystem.BL.Services;
 using TicketingSystem.BL.Services.Interfaces;
+using TicketingSystem.DAL;
 using TicketingSystem.DAL.Entities;
 using TicketingSystem.DAL.Interfaces;
 
@@ -14,12 +16,14 @@ namespace TicketingDomainSystem.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICartService _cartService;
         private readonly IMemoryCache _cache;
+        private readonly TicketingSystemContext _dbContext;
 
-        public OrdersController(IUnitOfWork unitOfWork, ICartService cartService, IMemoryCache cache)
+        public OrdersController(IUnitOfWork unitOfWork, ICartService cartService, IMemoryCache cache, TicketingSystemContext dbContext)
         {
             _unitOfWork = unitOfWork;
             _cartService = cartService;
             _cache = cache;
+            _dbContext = dbContext;
         }
 
         [HttpGet("carts/{cartId}")]
@@ -57,24 +61,23 @@ namespace TicketingDomainSystem.Controllers
 
             _unitOfWork.PaymentsRepository.AddAsync(payment);
 
-            cart.Version++;
-            var lockAcquired = await _unitOfWork.CartsRepository.LockEntityAsync(cartId);
-
-            if (!lockAcquired)
+            using var transaction = _dbContext.Database.BeginTransaction(System.Data.IsolationLevel.Serializable);
+            try
             {
-                throw new ArgumentException($"Cart with ID {cartId} is currently being modified by another user.");
+                _unitOfWork.CartsRepository.AddAsync(cart);
+                await _unitOfWork.SaveAsync();
+                // Invalidate the cache for the Event resource
+                _cache.Remove("GetEvents");
+
+                transaction.Commit();
+                return CreatedAtAction(nameof(GetCartDetails), new { cartId = cart.Id }, cart);
             }
-
-            _unitOfWork.CartsRepository.AddAsync(cart);
-
-            await _unitOfWork.SaveAsync();
-
-            await _unitOfWork.CartsRepository.UnlockEntityAsync(cartId);
-            // Invalidate the cache for the Event resource
-            _cache.Remove("GetEvents");
-
-            return CreatedAtAction(nameof(GetCartDetails), new { cartId = cart.Id }, cart);
-
+            catch (Exception ex)
+            {
+                _cache.Remove("GetEvents");
+                transaction.Rollback();
+                return StatusCode(400);
+            }
         }
 
         [HttpPost("carts/{cartId}")]
@@ -86,7 +89,7 @@ namespace TicketingDomainSystem.Controllers
                 Cart = cartDto
             };
 
-            var cart = await _unitOfWork.CartsRepository.GetAsync(cart => cart.Id == cartId);
+            var cart = (await _unitOfWork.CartsRepository.GetAsync(cart => cart.Id == cartId)).FirstOrDefault();
 
             if (cart == null)
             {
@@ -94,10 +97,12 @@ namespace TicketingDomainSystem.Controllers
             }
 
             // Check if the cart has been modified since it was retrieved
-            if (cart.FirstOrDefault().Version != cartDto.Version)
+            if (cart.Version != cartDto.Version)
             {
                 return Conflict();
             }
+
+            cart.Version++;
 
             _unitOfWork.PaymentsRepository.AddAsync(payment);
             _unitOfWork.CartsRepository.AddAsync(cartDto);
@@ -107,7 +112,7 @@ namespace TicketingDomainSystem.Controllers
             // Invalidate the cache for the Event resource
             _cache.Remove("GetEvents");
 
-            return CreatedAtAction(nameof(GetCartDetails), new { cartId = cart.FirstOrDefault().Id }, cart);
+            return CreatedAtAction(nameof(GetCartDetails), new { cartId = cart.Id }, cart);
 
         }
 
